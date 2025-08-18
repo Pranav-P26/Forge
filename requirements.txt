@@ -1,1 +1,14 @@
+# Web application framework
 flask
+# Database manager
+flask-sqlalchemy
+# Database migrations
+flask-migrate
+# Authentication tokens
+flask-jwt-extended
+# Communication between frontend and backend
+flask-cors
+# Rate limiter
+flask-limiter
+# .env reader
+python-dotenv
