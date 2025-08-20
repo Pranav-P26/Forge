@@ -2,6 +2,7 @@ from flask import Flask
 from .extensions import db, migrate, jwt, limiter, cors
 import redis
 from config import *
+from app.utils.response import error_response
 
 def create_app(config_name=None):
     app = Flask(__name__)
@@ -43,5 +44,30 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(main_bp)
+
+    # Error handles
+    @app.errorhandler(404)
+    def not_found(e):
+        return error_response("Not Found", "The requested resource was not found", 404)
+
+    @app.errorhandler(400)
+    def bad_request(e):
+        return error_response("Bad Request", str(e), 400)
+
+    @app.errorhandler(401)
+    def unauthorized(e):
+        return error_response("Unauthorized", str(e), 401)
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return error_response("Forbidden", str(e), 403)
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return error_response("Not Found", "The requested resource was not found", 404)
+
+    @app.errorhandler(500)
+    def internal_error(e):
+        return error_response("Internal Server Error", "Something went wrong", 500)
 
     return app
