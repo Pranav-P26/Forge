@@ -13,7 +13,7 @@ class BaseConfig:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=2)
 
     # Redis
-    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    REDIS_URL = os.getenv("REDIS_URL")
 
 # Configuration specific towards development builds
 class DevConfig(BaseConfig):
