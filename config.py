@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 # Common configuration settings shared across all environments
 class BaseConfig:
@@ -6,6 +7,13 @@ class BaseConfig:
     TESTING = False
     SECRET_KEY = os.getenv("SECRET_KEY")
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URI")
+
+    # JWT settings
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=2)
+
+    # Redis
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # Configuration specific towards development builds
 class DevConfig(BaseConfig):

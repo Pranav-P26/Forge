@@ -12,3 +12,7 @@ flask-cors
 flask-limiter
 # .env reader
 python-dotenv
+# Password Hashing
+flask-argon2
+# Token blacklisting
+redis
