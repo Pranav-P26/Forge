@@ -3,6 +3,7 @@ from .extensions import db, migrate, jwt, limiter, cors
 import redis
 from config import *
 from app.utils.response import error_response
+from app.utils import setup_logging
 
 def create_app(config_name=None):
     app = Flask(__name__)
@@ -29,6 +30,8 @@ def create_app(config_name=None):
     jwt.init_app(app)
     cors.init_app(app)
     limiter.init_app(app)
+    
+    setup_logging(app)
 
     # Redis
     from . import extensions

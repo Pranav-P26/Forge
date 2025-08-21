@@ -1,12 +1,13 @@
 from flask import request
 from . import auth_bp
 from app.extensions import db, jwt, redis_client
-from app.utils import hash_password, check_password, success_response, error_response
+from app.utils import hash_password, check_password, success_response, error_response, generate_tokens, require_fields
 from app.models import User
 from flask_jwt_extended import (
     create_access_token, create_refresh_token,
     jwt_required, get_jwt_identity, get_jwt
 )
+from app.extensions import limiter
 from datetime import datetime
 
 # Check if token is blacklisted
@@ -18,15 +19,16 @@ def check_token_revoked(jwt_header, jwt_payload):
 
 # Register
 @auth_bp.route("/register", methods=["POST"])
+@limiter.limit("5 per minute")
 def register_user():
     if not request.is_json:
         return error_response("Content-Type", "Content-Type must be application/json", 400)
 
     data = request.get_json()
-    required_keys = ["username", "email", "password"]
 
-    if not all(key in data for key in required_keys):
-        return error_response("Missing Data", "Missing required fields", 400)
+    error = require_fields(data, ["username", "email", "password"])
+    if error:
+        return error
 
     if User.query.filter_by(username=data["username"]).first() or User.query.filter_by(email=data["email"]).first():
         return error_response("Already Exists", "Username or email already exists", 409)
@@ -45,33 +47,29 @@ def register_user():
 
 # Login
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit("5 per minute")
 def login_user():
     if not request.is_json:
         return error_response("Content-Type", "Content-Type must be application/json", 400)
 
     data = request.get_json()
-    required_keys = ["username", "password"]
 
-    if not all(key in data for key in required_keys):
-        return error_response("Missing Data", "Missing required fields", 400)
+    error = require_fields(data, ["username", "password"])
+    if error:
+        return error
 
     user = User.query.filter_by(username=data["username"]).first()
     if not user or not check_password(user.password_hash, data["password"]):
         return error_response("Unauthorized", "Invalid username or password", 401)
 
-    access_token = create_access_token(identity=str(user.id))
-    refresh_token = create_refresh_token(identity=str(user.id))
-
-    return success_response(data={
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "user": user.as_dict()
-    })
+    tokens = generate_tokens(user)
+    return success_response(data={"user": user.as_dict(), **tokens})
 
 
 # Refresh Token
 @auth_bp.route("/refresh", methods=["POST"])
 @jwt_required(refresh=True)
+@limiter.limit("30 per minute")
 def refresh_access_token():
     user_id = get_jwt_identity()
     new_access = create_access_token(identity=user_id)
@@ -81,6 +79,7 @@ def refresh_access_token():
 # Revoke access w/ logout
 @auth_bp.route("/logout", methods=["DELETE"])
 @jwt_required(verify_type=False)
+@limiter.limit("10 per minute")
 def logout_user():
     jti = get_jwt()["jti"]
     exp = get_jwt()["exp"]
