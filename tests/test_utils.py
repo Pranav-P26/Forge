@@ -1,6 +1,5 @@
 import pytest
 
-
 def test_response_utilities():
     from app.utils.response import success_response, error_response
     
@@ -11,11 +10,11 @@ def test_response_utilities():
     assert resp.get_json()["data"]["test"] == "data"
     assert resp.get_json()["message"] == "Success"
     
-    # Test success response defaults (no message)
+    # Test success response defaults
     resp, code = success_response()
     assert code == 200
     assert resp.get_json()["success"] is True
-    assert "message" not in resp.get_json()  # No message when not provided
+    assert "message" not in resp.get_json()
     
     # Test error response
     resp, code = error_response("TestError", "Test message", 400)
@@ -58,6 +57,6 @@ def test_validator_utilities():
     assert code == 400
     assert "username" in resp.get_json()["message"]
     
-    # Test empty data (empty dict, not None)
+    # Test empty data
     error = require_fields({}, ["username"])
     assert error is not None

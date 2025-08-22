@@ -1,7 +1,6 @@
 import pytest
 from app import create_app
 
-
 def test_main_endpoints(client):
     # Test ping endpoint
     response = client.get("/ping")
@@ -33,7 +32,7 @@ def test_error_handlers(client):
     assert data["success"] is False
     
     # Test 401 error handler (unauthorized)
-    resp = client.get("/users/me")  # No auth header
+    resp = client.get("/users/me")
     assert resp.status_code == 401
 
 
@@ -43,7 +42,6 @@ def test_app_configuration():
     assert app.config.get("TESTING") is True
     assert app.config.get("SECRET_KEY") == "test-secret"
     
-    # Test with default config (DevConfig)
     app = create_app()
     assert app is not None
 
