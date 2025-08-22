@@ -29,15 +29,22 @@ def create_app(config_name=None):
     migrate.init_app(app, db)
     jwt.init_app(app)
     cors.init_app(app)
-    limiter.init_app(app)
+    
+    if app.config.get("RATELIMIT_ENABLED", True):
+        limiter.init_app(app)
     
     setup_logging(app)
 
     # Redis
     from . import extensions
-    extensions.redis_client = redis.from_url(
-        app.config["REDIS_URL"], decode_responses=True
-    )
+    try:
+        redis_url = app.config.get("REDIS_URL")
+        if redis_url:
+            extensions.redis_client = redis.from_url(redis_url)
+        else:
+            extensions.redis_client = None
+    except Exception:
+        extensions.redis_client = None
 
     # Blueprints
     from .blueprints.auth import auth_bp
@@ -64,10 +71,6 @@ def create_app(config_name=None):
     @app.errorhandler(403)
     def forbidden(e):
         return error_response("Forbidden", str(e), 403)
-
-    @app.errorhandler(404)
-    def not_found(e):
-        return error_response("Not Found", "The requested resource was not found", 404)
 
     @app.errorhandler(500)
     def internal_error(e):

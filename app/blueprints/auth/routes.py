@@ -13,13 +13,15 @@ from datetime import datetime
 # Check if token is blacklisted
 @jwt.token_in_blocklist_loader
 def check_token_revoked(jwt_header, jwt_payload):
+    if redis_client is None:
+        return False
     jti = jwt_payload["jti"]
     return redis_client.exists(f"blocklist:{jti}")
 
 
 # Register
 @auth_bp.route("/register", methods=["POST"])
-@limiter.limit("5 per minute")
+# @limiter.limit("5 per minute")
 def register_user():
     if not request.is_json:
         return error_response("Content-Type", "Content-Type must be application/json", 400)
@@ -47,7 +49,7 @@ def register_user():
 
 # Login
 @auth_bp.route("/login", methods=["POST"])
-@limiter.limit("5 per minute")
+# @limiter.limit("5 per minute")
 def login_user():
     if not request.is_json:
         return error_response("Content-Type", "Content-Type must be application/json", 400)
@@ -69,7 +71,7 @@ def login_user():
 # Refresh Token
 @auth_bp.route("/refresh", methods=["POST"])
 @jwt_required(refresh=True)
-@limiter.limit("30 per minute")
+# @limiter.limit("30 per minute")
 def refresh_access_token():
     user_id = get_jwt_identity()
     new_access = create_access_token(identity=user_id)
@@ -79,13 +81,16 @@ def refresh_access_token():
 # Revoke access w/ logout
 @auth_bp.route("/logout", methods=["DELETE"])
 @jwt_required(verify_type=False)
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def logout_user():
     jti = get_jwt()["jti"]
     exp = get_jwt()["exp"]
     token_type = get_jwt()["type"]
 
     ttl = exp - int(datetime.now().timestamp())
-    redis_client.setex(f"blocklist:{jti}", ttl, "true")
+    
+    # Only set in Redis if Redis is available
+    if redis_client is not None:
+        redis_client.setex(f"blocklist:{jti}", ttl, "true")
 
     return success_response(message=f"{token_type.capitalize()} token revoked, logged out")

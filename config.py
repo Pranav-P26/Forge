@@ -7,13 +7,10 @@ class BaseConfig:
     TESTING = False
     SECRET_KEY = os.getenv("SECRET_KEY")
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URI")
-
-    # JWT settings
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=2)
-
-    # Redis
     REDIS_URL = os.getenv("REDIS_URL")
+    RATELIMIT_STORAGE_URL = os.getenv("REDIS_URL", "memory://")
 
 # Configuration specific towards development builds
 class DevConfig(BaseConfig):
@@ -33,3 +30,8 @@ class TestConfig(BaseConfig):
     DEBUG = False
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SECRET_KEY = "test-secret"
+    JWT_SECRET_KEY = "test-jwt-secret"
+    RATELIMIT_STORAGE_URL = "memory://"
+    RATELIMIT_ENABLED = False
+    REDIS_URL = None

@@ -5,7 +5,6 @@ def hash_password(password):
 
 def check_password(hash, candidate):
     try:
-        argon2.check_password_hash(hash, candidate)
-        return True
+        return argon2.check_password_hash(hash, candidate)
     except Exception:
         return False

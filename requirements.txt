@@ -16,3 +16,8 @@ python-dotenv
 flask-argon2
 # Token blacklisting
 redis
+# Testing
+pytest
+pytest-flask
+coverage
+pytest-cov
